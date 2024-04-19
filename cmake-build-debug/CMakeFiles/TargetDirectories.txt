@@ -1,0 +1,3 @@
+C:/Users/rod_f/CLionProjects/TavernlightGames_TechTask_RodrigoFerzuli/cmake-build-debug/CMakeFiles/TavernlightGames_TechTask_RodrigoFerzuli.dir
+C:/Users/rod_f/CLionProjects/TavernlightGames_TechTask_RodrigoFerzuli/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/rod_f/CLionProjects/TavernlightGames_TechTask_RodrigoFerzuli/cmake-build-debug/CMakeFiles/rebuild_cache.dir

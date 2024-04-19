@@ -14,61 +14,100 @@ performance and show your full ability.]]
 
 --- Section #1 [SQ1-Q4 - Fix or improve the implementation of the below methods].
 --- Q1 - Fix or improve the implementation of the below methods
-
 local function releaseStorage(player)
-    player:setStorageValue(1000, -1)
+    -- Error handling for for better debugging
+    local success, err = pcall(function()
+        player:setStorageValue(1000, -1)
+    end)
+
+    if not success then
+        print("Error in releaseStorage:", err)
+    end
 end
 
 function onLogout(player)
-    if player:getStorageValue(1000) == 1 then
-        addEvent(releaseStorage, 1000, player)
+    -- Retrieve the current storage value of key 1000
+    local storageValue = player:getStorageValue(1000)
+
+    -- Check if the storage value is 1 to trigger releaseStorage
+    if storageValue == 1 then
+        -- Error handling for for better debugging
+        local success, err = pcall(function()
+            -- Schedule the releaseStorage function to run after 1000 milliseconds
+            addEvent(releaseStorage, 1000, player)
+        end)
+        if not success then
+            print("Error scheduling releaseStorage:", err)
+        end
     end
+
+    -- Allow the player to log out
     return true
 end
 
 --- Q2 - Fix or improve the implementation of the below method
-
 function printSmallGuildNames(memberCount)
     -- this method is supposed to print names of all guilds that have less than memberCount max members
-    local selectGuildQuery = "SELECT name FROM guilds WHERE max_members < %d;"
-    local resultId = db.storeQuery(string.format(selectGuildQuery, memberCount))
-    local guildName = result.getString("name")
-    print(guildName)
-end
-
---- Q3 - Fix or improve the name and the implementation of the below method
-
-function do_sth_with_PlayerParty(playerId, membername)
-    player = Player(playerId)
-    local party = player:getParty()
-
-    for k,v in pairs(party:getMembers()) do
-        if v == Player(membername) then
-            party:removeMember(Player(membername))
-        end
+    -- Prepare the SQL query
+    local selectGuildQuery = string.format("SELECT name FROM guilds WHERE max_members < %d;", memberCount)
+    -- Execute the query and retrieve the result
+    local result = db.storeQuery(selectGuildQuery)
+    -- Check if the query was successful
+    if result ~= nil then
+        -- Iterate over each row in the result
+        repeat
+            -- Retrieve the guild name from the current row
+            local guildName = result.getString(result, "name")
+            if guildName ~= nil then
+                -- Print the guild name
+                print(guildName)
+            end
+            -- Move to the next row; exit loop when no more rows
+        until not result.next(result)
+        -- Free the result set after processing
+        result.free(result)
+    else
+        -- Handle query execution failure
+        print("Error: Failed to execute guild query")
     end
 end
 
---- Assume all method calls work fine. Fix the memory leak issue in below method
+--- Q3 - Fix or improve the name and the implementation of the below method
+function removePartyMemberByName(playerName, memberName)
+    -- Retrieve the player object by name
+    local player = getPlayerByName(playerName)
 
-void Game::addItemToPlayer(const std::string& recipient, uint16_t itemId)
-{
-Player* player = g_game.getPlayerByName(recipient);
-if (!player) {
-player = new Player(nullptr);
-if (!IOLoginData::loadPlayerByName(player, recipient)) {
-return;
-}
-}
+    -- Check if player was found
+    if not player then
+        print("Player with name '" .. playerName .. "' not found.")
+        return
+    end
 
-Item* item = Item::CreateItem(itemId);
-if (!item) {
-return;
-}
+    -- Get the party of the player
+    local party = player:getParty()
 
-g_game.internalAddItem(player->getInbox(), item, INDEX_WHEREEVER, FLAG_NOLIMIT);
+    -- Check if player is in a party
+    if not party then
+        print("Player '" .. playerName .. "' is not in a party.")
+        return
+    end
 
-if (player->isOffline()) {
-IOLoginData::savePlayer(player);
-}
-}
+    -- Get the list of party members
+    local partyMembers = party:getMembers()
+
+    -- Iterate over party members
+    for _, member in pairs(partyMembers) do
+        -- Check if the member's name matches the specified memberName
+        if member:getName() == memberName then
+            -- Remove the member from the party
+            party:removeMember(member)
+            -- Print a message indicating successful removal
+            print("Removed '" .. memberName .. "' from party of player '" .. playerName .. "'.")
+            -- Exit the function after removing the member
+            return
+        end
+    end
+
+    -- If member is not found in the party, print an error message
+    print("Member '" .. memberName .. "' not found in the party of player '" .. playerName .. "'.")
+end
